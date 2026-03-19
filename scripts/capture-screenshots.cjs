@@ -18,10 +18,8 @@ function wait(milliseconds) {
 }
 
 async function waitForThemes(page) {
-  await page.locator(".theme-card").first().waitFor({ state: "visible" });
-  await page.waitForFunction(() => {
-    return document.querySelectorAll(".theme-card").length >= 4;
-  });
+  await page.locator("#player-name").waitFor({ state: "visible" });
+  await page.locator(".selected-theme-card").waitFor({ state: "visible" });
 }
 
 async function clickMap(page) {
@@ -59,12 +57,12 @@ async function main() {
     });
 
     await page.fill("#player-name", "Explorer");
-    await page.locator(".theme-card").nth(2).click();
     await page.locator(".hero-form .primary-button").click();
 
     await page.locator(".map-panel").waitFor({ state: "visible" });
     await page.locator(".question-panel").waitFor({ state: "visible" });
-    await wait(3000);
+    await page.locator(".map-tip-card").waitFor({ state: "visible" });
+    await wait(1800);
 
     await page.screenshot({
       path: outputPath("game.png"),
@@ -80,16 +78,19 @@ async function main() {
 
     for (let index = 0; index < 10; index += 1) {
       await clickMap(page);
-      await page.locator(".feedback-metrics").waitFor({ state: "visible" });
+      await page
+        .locator(".feedback-metrics, .result-modal")
+        .first()
+        .waitFor({ state: "visible" });
       await wait(700);
 
-      const finishedBlock = page.locator(".finished-block");
+      const resultModal = page.locator(".result-modal");
 
-      if (await finishedBlock.isVisible().catch(() => false)) {
+      if (await resultModal.isVisible().catch(() => false)) {
         break;
       }
 
-      const nextButton = page.locator(".feedback-panel > .primary-button");
+      const nextButton = page.locator(".map-feedback-tray .primary-button");
 
       if (await nextButton.isVisible().catch(() => false)) {
         await nextButton.click();
@@ -100,7 +101,7 @@ async function main() {
       break;
     }
 
-    await page.locator(".finished-block").waitFor({ state: "visible" });
+    await page.locator(".result-modal").waitFor({ state: "visible" });
     await page.locator(".passport-card").waitFor({ state: "visible" });
     await wait(1200);
 

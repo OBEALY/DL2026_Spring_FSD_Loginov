@@ -44,7 +44,7 @@ interface ExpeditionPassport {
   hintsUsed: number;
 }
 
-type HomeSidebarTab = "leaderboard" | "suggest";
+type HomeSidebarTab = "leaderboard" | "overview" | "suggest";
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Произошла неожиданная ошибка.";
@@ -195,6 +195,118 @@ function ThemeModal({
             onClose();
           }}
         />
+      </section>
+    </div>
+  );
+}
+
+interface ProjectInfoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+function ProjectInfoModal({
+  isOpen,
+  onClose
+}: ProjectInfoModalProps): JSX.Element | null {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div className="modal-backdrop" role="presentation">
+      <section
+        className="panel info-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="project-info-title"
+      >
+        <div className="theme-modal__topline">
+          <div>
+            <span className="eyebrow">Что внутри проекта</span>
+            <h2 id="project-info-title">Geo-quiz как готовый учебный fullstack-проект</h2>
+          </div>
+          <button type="button" className="ghost-button modal-close" onClick={onClose}>
+            Закрыть
+          </button>
+        </div>
+
+        <p className="theme-modal__copy">
+          Здесь собраны обязательные пункты ТЗ и продуктовые улучшения, которые делают
+          викторину живой и удобной в прохождении.
+        </p>
+
+        <div className="info-modal__grid">
+          <article className="info-modal__card">
+            <strong>Игровой цикл</strong>
+            <p>
+              10 вопросов подряд, один клик по карте, мгновенный результат и переход без
+              перезагрузки страницы.
+            </p>
+          </article>
+          <article className="info-modal__card">
+            <strong>Контент и режимы</strong>
+            <p>
+              Тематические подборки, фотографии объектов, ручные подсказки и лидерборд
+              лучших сессий.
+            </p>
+          </article>
+          <article className="info-modal__card">
+            <strong>Финальный отчёт</strong>
+            <p>
+              После игры показываются итоговый счёт, рейтинг и персональный паспорт
+              экспедиции.
+            </p>
+          </article>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+interface ImageLightboxProps {
+  isOpen: boolean;
+  imageUrl: string;
+  alt: string;
+  onClose: () => void;
+}
+
+function ImageLightbox({
+  isOpen,
+  imageUrl,
+  alt,
+  onClose
+}: ImageLightboxProps): JSX.Element | null {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div
+      className="modal-backdrop image-lightbox-backdrop"
+      role="presentation"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <section
+        className="panel image-lightbox"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Просмотр изображения"
+      >
+        <div className="image-lightbox__topline">
+          <span className="eyebrow">Просмотр изображения</span>
+          <button type="button" className="ghost-button modal-close" onClick={onClose}>
+            Закрыть
+          </button>
+        </div>
+
+        <div className="image-lightbox__frame">
+          <img className="image-lightbox__image" src={imageUrl} alt={alt} />
+        </div>
       </section>
     </div>
   );
@@ -379,6 +491,9 @@ export default function App(): JSX.Element {
   const [homeSidebarTab, setHomeSidebarTab] = useState<HomeSidebarTab>("leaderboard");
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [isFirstRoundTipVisible, setIsFirstRoundTipVisible] = useState(true);
+  const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
+  const [isImageLightboxOpen, setIsImageLightboxOpen] = useState(false);
 
   const isFinished = session?.status === "finished";
   const questionNumber = session
@@ -387,6 +502,13 @@ export default function App(): JSX.Element {
   const progressPercent = session
     ? Math.round((session.currentIndex / session.totalQuestions) * 100)
     : 0;
+  const shouldShowFirstRoundTip = Boolean(
+    session &&
+      currentQuestion &&
+      !feedback &&
+      questionNumber === 1 &&
+      isFirstRoundTipVisible
+  );
   const selectedTheme = themes.find((theme) => theme.id === selectedThemeId) ?? null;
   const recommendedTheme = useMemo(
     () => getRecommendedTheme(session, themes),
@@ -417,6 +539,7 @@ export default function App(): JSX.Element {
     if (!currentQuestion) {
       setQuestionImageUrl(null);
       setIsImageLoading(false);
+      setIsImageLightboxOpen(false);
       return;
     }
 
@@ -451,6 +574,22 @@ export default function App(): JSX.Element {
 
     return () => controller.abort();
   }, [currentQuestion]);
+
+  useEffect(() => {
+    if (!isImageLightboxOpen) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent): void {
+      if (event.key === "Escape") {
+        setIsImageLightboxOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isImageLightboxOpen]);
 
   async function loadInitialData(): Promise<void> {
     try {
@@ -515,6 +654,7 @@ export default function App(): JSX.Element {
       setCurrentRank(null);
       setTotalFinishedSessions(null);
       setIsResultModalOpen(false);
+      setIsFirstRoundTipVisible(true);
     } catch (caughtError) {
       setError(getErrorMessage(caughtError));
     } finally {
@@ -590,6 +730,7 @@ export default function App(): JSX.Element {
     setCurrentRank(null);
     setTotalFinishedSessions(null);
     setIsResultModalOpen(false);
+    setIsFirstRoundTipVisible(true);
     setError(null);
   }
 
@@ -635,11 +776,15 @@ export default function App(): JSX.Element {
             <span className="brand__badge">Geo-quiz</span>
             <div>
               <h1 className="brand__title">Географическая викторина на карте мира</h1>
-              <p className="brand__subtitle">
-                Игровой fullstack-проект с тематическими подборками, таблицей лидеров,
-                предложением собственных вопросов и персональным паспортом экспедиции
-                после завершения сессии.
-              </p>
+              {!session ? (
+                <button
+                  type="button"
+                  className="ghost-button brand__info-button"
+                  onClick={() => setIsProjectInfoOpen(true)}
+                >
+                  Что внутри Geo-quiz
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -720,42 +865,6 @@ export default function App(): JSX.Element {
             </section>
 
             <section className="home-sidebar">
-              <section className="panel preview-panel">
-                <div className="panel-heading">
-                  <div>
-                    <span className="eyebrow">Как выглядит игровой цикл</span>
-                    <h3 className="panel-title">От вопроса до очков</h3>
-                  </div>
-                </div>
-
-                <div className="preview-scoreboard">
-                  <div className="preview-scoreboard__item">
-                    <span>Раунд</span>
-                    <strong>4 / 10</strong>
-                  </div>
-                  <div className="preview-scoreboard__item">
-                    <span>Очки</span>
-                    <strong>3 420</strong>
-                  </div>
-                  <div className="preview-scoreboard__item">
-                    <span>Таймер</span>
-                    <strong>12s</strong>
-                  </div>
-                </div>
-
-                <div className="preview-route">
-                  <span className="preview-dot preview-dot--guess" />
-                  <span className="preview-route__line" />
-                  <span className="preview-dot preview-dot--answer" />
-                </div>
-
-                <p className="preview-copy">
-                  Игрок видит вопрос, ориентируется по карте, получает расстояние в
-                  километрах, баллы и затем может сразу пойти в следующую тематическую
-                  подборку, которую система подскажет сама.
-                </p>
-              </section>
-
               <section className="home-tab-switcher">
                 <button
                   type="button"
@@ -763,6 +872,13 @@ export default function App(): JSX.Element {
                   onClick={() => setHomeSidebarTab("leaderboard")}
                 >
                   Лидерборд
+                </button>
+                <button
+                  type="button"
+                  className={`home-tab${homeSidebarTab === "overview" ? " is-active" : ""}`}
+                  onClick={() => setHomeSidebarTab("overview")}
+                >
+                  Как играть
                 </button>
                 <button
                   type="button"
@@ -775,6 +891,42 @@ export default function App(): JSX.Element {
 
               {homeSidebarTab === "leaderboard" ? (
                 <LeaderboardPanel items={leaderboard} />
+              ) : homeSidebarTab === "overview" ? (
+                <section className="panel preview-panel">
+                  <div className="panel-heading">
+                    <div>
+                      <span className="eyebrow">Как проходит раунд</span>
+                      <h3 className="panel-title">Вопрос, клик, результат</h3>
+                    </div>
+                  </div>
+
+                  <div className="preview-scoreboard">
+                    <div className="preview-scoreboard__item">
+                      <span>Раунд</span>
+                      <strong>4 / 10</strong>
+                    </div>
+                    <div className="preview-scoreboard__item">
+                      <span>Очки</span>
+                      <strong>3 420</strong>
+                    </div>
+                    <div className="preview-scoreboard__item">
+                      <span>Таймер</span>
+                      <strong>12 сек</strong>
+                    </div>
+                  </div>
+
+                  <div className="preview-route">
+                    <span className="preview-dot preview-dot--guess" />
+                    <span className="preview-route__line" />
+                    <span className="preview-dot preview-dot--answer" />
+                  </div>
+
+                  <p className="preview-copy">
+                    Сначала ты ставишь точку на карте. Сразу после клика приложение
+                    показывает расстояние, очки и правильное место, а затем переводит в
+                    следующий вопрос без перезагрузки страницы и лишнего скролла.
+                  </p>
+                </section>
               ) : (
                 <QuestionSuggestionForm
                   defaultPlayerName={playerName}
@@ -819,11 +971,18 @@ export default function App(): JSX.Element {
 
                 {questionImageUrl ? (
                   <div className="question-media">
-                    <img
-                      className="question-image"
-                      src={questionImageUrl}
-                      alt={currentQuestion.prompt}
-                    />
+                    <button
+                      type="button"
+                      className="question-image-button"
+                      onClick={() => setIsImageLightboxOpen(true)}
+                    >
+                      <img
+                        className="question-image"
+                        src={questionImageUrl}
+                        alt={currentQuestion.prompt}
+                      />
+                      <span className="question-image-hint">Нажми, чтобы открыть крупнее</span>
+                    </button>
                   </div>
                 ) : isImageLoading ? (
                   <div className="question-image-placeholder">
@@ -912,13 +1071,23 @@ export default function App(): JSX.Element {
                     onGuess={handleGuess}
                   />
 
-                  {!feedback ? (
+                  {shouldShowFirstRoundTip ? (
                     <div className="map-tip-card">
-                      <span className="eyebrow">Инструкция</span>
-                      <h4>Один точный клик по карте</h4>
+                      <div className="map-tip-card__header">
+                        <span className="eyebrow">Первый раунд</span>
+                        <button
+                          type="button"
+                          className="map-tip-card__close"
+                          onClick={() => setIsFirstRoundTipVisible(false)}
+                          aria-label="Закрыть инструкцию"
+                        >
+                          Закрыть
+                        </button>
+                      </div>
+                      <h4>Выбери точку одним кликом</h4>
                       <p>
-                        Отметь предполагаемую точку. Ответ отправится сразу, а итог
-                        покажем рядом с картой без лишнего скролла.
+                        Отметь место, где, как тебе кажется, находится объект. Ответ
+                        отправится сразу, а расстояние и очки появятся рядом с картой.
                       </p>
                     </div>
                   ) : null}
@@ -944,9 +1113,12 @@ export default function App(): JSX.Element {
                             +{scoreFormatter.format(feedback.scoreAwarded)} очков
                           </span>
                         </div>
-                        <p className="map-feedback-tray__fact">
-                          <strong>Факт:</strong> {feedback.funFact}
-                        </p>
+                        <div className="map-feedback-tray__fact">
+                          <span className="map-feedback-tray__fact-label">
+                            Интересный факт
+                          </span>
+                          <p>{feedback.funFact}</p>
+                        </div>
                       </div>
 
                       <div className="map-feedback-tray__actions">
@@ -987,12 +1159,27 @@ export default function App(): JSX.Element {
       ) : null}
 
       {!session ? (
-        <ThemeModal
-          isOpen={isThemeModalOpen}
-          themes={themes}
-          selectedThemeId={selectedThemeId}
-          onSelect={setSelectedThemeId}
-          onClose={() => setIsThemeModalOpen(false)}
+        <>
+          <ThemeModal
+            isOpen={isThemeModalOpen}
+            themes={themes}
+            selectedThemeId={selectedThemeId}
+            onSelect={setSelectedThemeId}
+            onClose={() => setIsThemeModalOpen(false)}
+          />
+          <ProjectInfoModal
+            isOpen={isProjectInfoOpen}
+            onClose={() => setIsProjectInfoOpen(false)}
+          />
+        </>
+      ) : null}
+
+      {questionImageUrl ? (
+        <ImageLightbox
+          isOpen={isImageLightboxOpen}
+          imageUrl={questionImageUrl}
+          alt={currentQuestion?.prompt ?? "Изображение вопроса"}
+          onClose={() => setIsImageLightboxOpen(false)}
         />
       ) : null}
     </div>

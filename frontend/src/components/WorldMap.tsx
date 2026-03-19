@@ -6,6 +6,7 @@ import {
   MapContainer,
   Polyline,
   TileLayer,
+  ZoomControl,
   useMap,
   useMapEvents
 } from "react-leaflet";
@@ -119,6 +120,7 @@ export function WorldMap({
       center={defaultCenter}
       zoom={2}
       minZoom={2}
+      zoomControl={false}
       worldCopyJump
       className="quiz-map"
     >
@@ -127,6 +129,7 @@ export function WorldMap({
         subdomains="abcd"
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
+      <ZoomControl position="bottomright" />
       <ClickHandler isLocked={isLocked} onGuess={onGuess} />
       <FeedbackViewport feedback={feedback} />
 
