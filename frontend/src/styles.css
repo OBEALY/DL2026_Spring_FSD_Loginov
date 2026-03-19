@@ -91,6 +91,15 @@ button {
   padding: 28px;
 }
 
+.page--game {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+  padding: 20px 24px;
+}
+
 .site-header {
   display: flex;
   align-items: flex-start;
@@ -131,6 +140,27 @@ button {
   max-width: 680px;
   color: var(--muted);
   font-size: 1.05rem;
+}
+
+.page--game .site-header {
+  flex: 0 0 auto;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.page--game .brand {
+  gap: 8px;
+  max-width: 900px;
+}
+
+.page--game .brand__title {
+  font-size: clamp(1.65rem, 2.4vw, 2.35rem);
+}
+
+.page--game .brand__subtitle {
+  margin-top: 4px;
+  font-size: 0.95rem;
+  max-width: 860px;
 }
 
 .panel {
@@ -425,9 +455,72 @@ button {
   align-items: start;
 }
 
+.page--game .dashboard {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: stretch;
+  gap: 18px;
+}
+
 .sidebar {
   display: grid;
   gap: 18px;
+}
+
+.page--game .sidebar {
+  height: 100%;
+  min-height: 0;
+  gap: 14px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.page--game .question-panel,
+.page--game .feedback-panel,
+.page--game .leaderboard-panel {
+  padding: 22px;
+}
+
+.page--game .question-title,
+.page--game .panel-title {
+  margin-top: 10px;
+}
+
+.page--game .question-copy,
+.page--game .muted-copy,
+.page--game .finished-copy,
+.page--game .fact-box p {
+  font-size: 0.94rem;
+}
+
+.page--game .chip-row,
+.page--game .feedback-metrics {
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.page--game .chip,
+.page--game .metric-pill {
+  padding: 7px 11px;
+  font-size: 0.88rem;
+}
+
+.page--game .progress-bar {
+  margin-top: 18px;
+}
+
+.page--game .stats-grid {
+  gap: 14px;
+}
+
+.page--game .stat-card,
+.page--game .result-stat,
+.page--game .passport-stat {
+  padding: 14px;
+}
+
+.page--game .stat-value {
+  font-size: 1.2rem;
 }
 
 .chip-row,
@@ -456,6 +549,11 @@ button {
   padding: 16px;
 }
 
+.page--game .question-media {
+  min-height: 200px;
+  padding: 12px;
+}
+
 .question-image {
   display: block;
   width: 100%;
@@ -465,6 +563,10 @@ button {
   object-position: center;
   border-radius: 14px;
   background: rgba(5, 18, 24, 0.36);
+}
+
+.page--game .question-image {
+  height: clamp(180px, 22vh, 240px);
 }
 
 .question-image-placeholder {
@@ -528,6 +630,11 @@ button {
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(172, 193, 189, 0.1);
+}
+
+.page--game .fact-box {
+  margin: 16px 0;
+  padding: 14px;
 }
 
 .fact-box strong {
@@ -629,6 +736,12 @@ button {
   overflow: hidden;
 }
 
+.page--game .map-section,
+.page--game .map-panel {
+  height: 100%;
+  min-height: 0;
+}
+
 .suggestion-panel {
   padding: 28px;
 }
@@ -658,11 +771,21 @@ button {
   border-top: 1px solid rgba(172, 193, 189, 0.12);
 }
 
+.page--game .map-stage {
+  height: 100%;
+  min-height: 0;
+}
+
 .quiz-map,
 .leaflet-container {
   width: 100%;
   min-height: inherit;
   background: #0a1c22;
+}
+
+.page--game .quiz-map,
+.page--game .leaflet-container {
+  height: 100%;
 }
 
 .map-overlay {
@@ -769,6 +892,21 @@ button {
   .map-action-bar {
     right: 16px;
     bottom: 16px;
+  }
+
+  .page--game {
+    height: auto;
+    overflow: visible;
+    padding: 18px;
+  }
+
+  .page--game .sidebar,
+  .page--game .map-section,
+  .page--game .map-panel,
+  .page--game .map-stage {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
   }
 }
 

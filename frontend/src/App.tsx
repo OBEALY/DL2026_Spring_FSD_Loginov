@@ -418,7 +418,7 @@ export default function App(): JSX.Element {
       <div className="orb orb-b" />
       <div className="orb orb-c" />
 
-      <main className="page">
+      <main className={`page${session ? " page--game" : ""}`}>
         <header className="site-header">
           <div className="brand">
             <span className="brand__badge">Geo-quiz</span>
