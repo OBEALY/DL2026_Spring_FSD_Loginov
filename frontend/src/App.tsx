@@ -860,18 +860,7 @@ export default function App(): JSX.Element {
 
               {error ? <div className="error-banner">{error}</div> : null}
 
-              {!feedback ? (
-                <section className="panel feedback-panel">
-                  <>
-                    <span className="eyebrow">Инструкция</span>
-                    <h3 className="panel-title">Сделай один точный клик по карте</h3>
-                    <p className="muted-copy">
-                      После выбора точки ответ отправится сразу. Чем ближе к правильному
-                      месту и чем быстрее ответ, тем выше итоговый счёт.
-                    </p>
-                  </>
-                </section>
-              ) : isFinished ? (
+              {isFinished ? (
                 <section className="panel feedback-panel">
                   <div className="finished-inline-card">
                     <span className="eyebrow">Сессия завершена</span>
@@ -922,6 +911,17 @@ export default function App(): JSX.Element {
                     isLocked={Boolean(feedback) || isSubmitting}
                     onGuess={handleGuess}
                   />
+
+                  {!feedback ? (
+                    <div className="map-tip-card">
+                      <span className="eyebrow">Инструкция</span>
+                      <h4>Один точный клик по карте</h4>
+                      <p>
+                        Отметь предполагаемую точку. Ответ отправится сразу, а итог
+                        покажем рядом с картой без лишнего скролла.
+                      </p>
+                    </div>
+                  ) : null}
 
                   {!feedback ? (
                     <div className={`map-overlay${isSubmitting ? " map-overlay--active" : ""}`}>
