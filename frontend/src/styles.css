@@ -481,6 +481,11 @@ button {
   padding: 22px;
 }
 
+.page--game .feedback-panel {
+  display: grid;
+  gap: 12px;
+}
+
 .page--game .question-title,
 .page--game .panel-title {
   margin-top: 10px;
@@ -635,6 +640,10 @@ button {
 .page--game .fact-box {
   margin: 16px 0;
   padding: 14px;
+}
+
+.page--game .finished-block {
+  gap: 12px;
 }
 
 .fact-box strong {
@@ -804,18 +813,6 @@ button {
   color: var(--text);
 }
 
-.map-action-bar {
-  position: absolute;
-  right: 22px;
-  bottom: 22px;
-  z-index: 500;
-}
-
-.map-action-button {
-  min-width: 220px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
-}
-
 .leaderboard-list {
   display: grid;
   gap: 10px;
@@ -889,11 +886,6 @@ button {
     flex-direction: column;
   }
 
-  .map-action-bar {
-    right: 16px;
-    bottom: 16px;
-  }
-
   .page--game {
     height: auto;
     overflow: visible;
@@ -961,16 +953,5 @@ button {
     right: 14px;
     bottom: 14px;
     text-align: center;
-  }
-
-  .map-action-bar {
-    left: 14px;
-    right: 14px;
-    bottom: 68px;
-  }
-
-  .map-action-button {
-    width: 100%;
-    min-width: 0;
   }
 }

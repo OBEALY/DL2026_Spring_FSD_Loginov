@@ -775,18 +775,6 @@ export default function App(): JSX.Element {
                   <div className={`map-overlay${isSubmitting ? " map-overlay--active" : ""}`}>
                     {isSubmitting ? "Проверяем ответ..." : "Клик по карте = отправка ответа"}
                   </div>
-
-                  {feedback && !isFinished ? (
-                    <div className="map-action-bar">
-                      <button
-                        type="button"
-                        className="primary-button map-action-button"
-                        onClick={handleNextQuestion}
-                      >
-                        Следующий вопрос
-                      </button>
-                    </div>
-                  ) : null}
                 </div>
               </section>
             </section>
