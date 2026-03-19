@@ -145,6 +145,61 @@ function getRecommendedTheme(
   return averageScore >= 650 ? byId("capitals") : byId("iconic-landmarks");
 }
 
+interface ThemeModalProps {
+  isOpen: boolean;
+  themes: ThemeOption[];
+  selectedThemeId: CollectionId;
+  onSelect: (themeId: CollectionId) => void;
+  onClose: () => void;
+}
+
+function ThemeModal({
+  isOpen,
+  themes,
+  selectedThemeId,
+  onSelect,
+  onClose
+}: ThemeModalProps): JSX.Element | null {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div className="modal-backdrop" role="presentation">
+      <section
+        className="panel theme-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="theme-modal-title"
+      >
+        <div className="theme-modal__topline">
+          <div>
+            <span className="eyebrow">Выбор режима</span>
+            <h2 id="theme-modal-title">Подбери следующую экспедицию</h2>
+          </div>
+          <button type="button" className="ghost-button modal-close" onClick={onClose}>
+            Закрыть
+          </button>
+        </div>
+
+        <p className="theme-modal__copy">
+          Выбор режима вынесен в отдельное окно, чтобы стартовый экран оставался коротким
+          и не заставлял скроллить страницу вниз.
+        </p>
+
+        <ThemePicker
+          themes={themes}
+          selectedThemeId={selectedThemeId}
+          onSelect={(themeId) => {
+            onSelect(themeId);
+            onClose();
+          }}
+        />
+      </section>
+    </div>
+  );
+}
+
 interface ResultModalProps {
   isOpen: boolean;
   session: SessionSummary;
@@ -323,6 +378,7 @@ export default function App(): JSX.Element {
   );
   const [homeSidebarTab, setHomeSidebarTab] = useState<HomeSidebarTab>("leaderboard");
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
   const isFinished = session?.status === "finished";
   const questionNumber = session
@@ -618,37 +674,48 @@ export default function App(): JSX.Element {
                   placeholder="Например, Alex"
                 />
 
-                <button type="submit" className="primary-button" disabled={isStarting}>
-                  {isStarting
-                    ? "Запуск..."
-                    : `Начать: ${selectedTheme?.label ?? "Глобальный микс"}`}
-                </button>
+                <div className="hero-action-row">
+                  <button type="submit" className="primary-button" disabled={isStarting}>
+                    {isStarting
+                      ? "Запуск..."
+                      : `Начать: ${selectedTheme?.label ?? "Глобальный микс"}`}
+                  </button>
+                  <button
+                    type="button"
+                    className="ghost-button"
+                    onClick={() => setIsThemeModalOpen(true)}
+                  >
+                    Выбрать режим
+                  </button>
+                </div>
               </form>
 
               {error ? <div className="error-banner">{error}</div> : null}
 
-              <ThemePicker
-                themes={themes}
-                selectedThemeId={selectedThemeId}
-                onSelect={setSelectedThemeId}
-              />
+              {selectedTheme ? (
+                <section className="selected-theme-card">
+                  <div className="selected-theme-card__header">
+                    <span className="eyebrow">Выбранный режим</span>
+                    <span className="selected-theme-card__count">
+                      {selectedTheme.questionCount} вопросов
+                    </span>
+                  </div>
+                  <h3>{selectedTheme.label}</h3>
+                  <p>{selectedTheme.description}</p>
+                  <button
+                    type="button"
+                    className="ghost-button selected-theme-card__button"
+                    onClick={() => setIsThemeModalOpen(true)}
+                  >
+                    Сменить подборку
+                  </button>
+                </section>
+              ) : null}
 
-              <div className="feature-grid">
-                <article className="feature-card">
-                  <strong>Тематические подборки</strong>
-                  <p>Можно запускать общий режим, чудеса света или городской формат.</p>
-                </article>
-                <article className="feature-card">
-                  <strong>Лидерборд</strong>
-                  <p>Финальные результаты попадают в таблицу и помогают сравнивать сессии.</p>
-                </article>
-                <article className="feature-card">
-                  <strong>Киллер-фича</strong>
-                  <p>
-                    После игры приложение выдаёт паспорт экспедиции с титулом,
-                    точностью и рекомендацией следующего режима.
-                  </p>
-                </article>
+              <div className="hero-highlights">
+                <span className="highlight-pill">4 игровых режима</span>
+                <span className="highlight-pill">Лидерборд</span>
+                <span className="highlight-pill">Паспорт экспедиции</span>
               </div>
             </section>
 
@@ -722,7 +789,9 @@ export default function App(): JSX.Element {
         ) : (
           <section className="dashboard">
             <aside className="sidebar">
-              <section className="panel question-panel">
+              <section
+                className={`panel question-panel${feedback ? " question-panel--answered" : ""}`}
+              >
                 <span className="eyebrow">
                   Вопрос {questionNumber} из {session.totalQuestions}
                 </span>
@@ -777,13 +846,13 @@ export default function App(): JSX.Element {
               </section>
 
               <section className="stats-grid">
-                <article className="panel stat-card">
+                <article className="panel stat-card stat-card--score">
                   <span className="stat-label">Суммарный счёт</span>
                   <strong className="stat-value">
                     {scoreFormatter.format(session.totalScore)}
                   </strong>
                 </article>
-                <article className="panel stat-card">
+                <article className="panel stat-card stat-card--timer">
                   <span className="stat-label">Таймер вопроса</span>
                   <strong className="stat-value">{elapsedSeconds}s</strong>
                 </article>
@@ -791,68 +860,8 @@ export default function App(): JSX.Element {
 
               {error ? <div className="error-banner">{error}</div> : null}
 
-              <section className="panel feedback-panel">
-                {feedback ? (
-                  <>
-                    <div className="feedback-header">
-                      <div>
-                        <span className="eyebrow">Результат ответа</span>
-                        <h3 className="panel-title">{feedback.accuracyLabel}</h3>
-                      </div>
-                    </div>
-
-                    <div className="feedback-metrics">
-                      <span className="metric-pill">
-                        {feedback.distanceKm.toLocaleString("ru-RU")} км
-                      </span>
-                      <span className="metric-pill">
-                        +{scoreFormatter.format(feedback.scoreAwarded)} очков
-                      </span>
-                    </div>
-
-                    <div className="fact-box">
-                      <strong>Факт:</strong>
-                      <p>{feedback.funFact}</p>
-                    </div>
-
-                    {isFinished ? (
-                      <div className="finished-inline-card">
-                        <span className="eyebrow">Сессия завершена</span>
-                        <h4>Итоговый отчёт уже готов</h4>
-                        <p>
-                          Открой модальное окно с рейтингом, паспортом экспедиции и
-                          рекомендацией следующего режима.
-                        </p>
-                        <div className="feedback-actions">
-                          <button
-                            type="button"
-                            className="primary-button"
-                            onClick={() => setIsResultModalOpen(true)}
-                          >
-                            Открыть отчёт
-                          </button>
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            onClick={handleResetGame}
-                          >
-                            Новая игра
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="feedback-actions">
-                        <button
-                          type="button"
-                          className="primary-button"
-                          onClick={handleNextQuestion}
-                        >
-                          Следующий вопрос
-                        </button>
-                      </div>
-                    )}
-                  </>
-                ) : (
+              {!feedback ? (
+                <section className="panel feedback-panel">
                   <>
                     <span className="eyebrow">Инструкция</span>
                     <h3 className="panel-title">Сделай один точный клик по карте</h3>
@@ -861,8 +870,35 @@ export default function App(): JSX.Element {
                       месту и чем быстрее ответ, тем выше итоговый счёт.
                     </p>
                   </>
-                )}
-              </section>
+                </section>
+              ) : isFinished ? (
+                <section className="panel feedback-panel">
+                  <div className="finished-inline-card">
+                    <span className="eyebrow">Сессия завершена</span>
+                    <h4>Итоговый отчёт уже готов</h4>
+                    <p>
+                      Открой модальное окно с рейтингом, паспортом экспедиции и
+                      рекомендацией следующего режима.
+                    </p>
+                    <div className="feedback-actions">
+                      <button
+                        type="button"
+                        className="primary-button"
+                        onClick={() => setIsResultModalOpen(true)}
+                      >
+                        Открыть отчёт
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={handleResetGame}
+                      >
+                        Новая игра
+                      </button>
+                    </div>
+                  </div>
+                </section>
+              ) : null}
             </aside>
 
             <section className="map-section">
@@ -887,9 +923,43 @@ export default function App(): JSX.Element {
                     onGuess={handleGuess}
                   />
 
-                  <div className={`map-overlay${isSubmitting ? " map-overlay--active" : ""}`}>
-                    {isSubmitting ? "Проверяем ответ..." : "Клик по карте = отправка ответа"}
-                  </div>
+                  {!feedback ? (
+                    <div className={`map-overlay${isSubmitting ? " map-overlay--active" : ""}`}>
+                      {isSubmitting ? "Проверяем ответ..." : "Клик по карте = отправка ответа"}
+                    </div>
+                  ) : null}
+
+                  {feedback && !isFinished ? (
+                    <div className="map-feedback-tray">
+                      <div className="map-feedback-tray__content">
+                        <div className="map-feedback-tray__header">
+                          <span className="eyebrow">Результат ответа</span>
+                          <h3>{feedback.accuracyLabel}</h3>
+                        </div>
+                        <div className="feedback-metrics">
+                          <span className="metric-pill">
+                            {feedback.distanceKm.toLocaleString("ru-RU")} км
+                          </span>
+                          <span className="metric-pill">
+                            +{scoreFormatter.format(feedback.scoreAwarded)} очков
+                          </span>
+                        </div>
+                        <p className="map-feedback-tray__fact">
+                          <strong>Факт:</strong> {feedback.funFact}
+                        </p>
+                      </div>
+
+                      <div className="map-feedback-tray__actions">
+                        <button
+                          type="button"
+                          className="primary-button"
+                          onClick={handleNextQuestion}
+                        >
+                          Следующий вопрос
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </section>
             </section>
@@ -913,6 +983,16 @@ export default function App(): JSX.Element {
             setIsResultModalOpen(false);
             void startGame(themeId);
           }}
+        />
+      ) : null}
+
+      {!session ? (
+        <ThemeModal
+          isOpen={isThemeModalOpen}
+          themes={themes}
+          selectedThemeId={selectedThemeId}
+          onSelect={setSelectedThemeId}
+          onClose={() => setIsThemeModalOpen(false)}
         />
       ) : null}
     </div>
