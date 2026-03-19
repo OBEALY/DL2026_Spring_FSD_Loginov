@@ -31,11 +31,20 @@ export function ThemePicker({
               className={`theme-card${isSelected ? " is-selected" : ""}`}
               onClick={() => onSelect(theme.id)}
             >
+              <span className="theme-card__badge">Маршрут</span>
               <div className="theme-card__topline">
                 <strong>{theme.label}</strong>
-                <span>{theme.questionCount} вопросов</span>
+                <span className="theme-card__count">{theme.questionCount} вопросов</span>
               </div>
               <p>{theme.description}</p>
+              <div className="theme-card__footer">
+                <span className="theme-card__meta">
+                  {isSelected ? "Режим выбран" : "Нажми, чтобы выбрать"}
+                </span>
+                <span className="theme-card__cta">
+                  {isSelected ? "Готово" : "Выбрать"}
+                </span>
+              </div>
             </button>
           );
         })}
@@ -43,4 +52,3 @@ export function ThemePicker({
     </section>
   );
 }
-

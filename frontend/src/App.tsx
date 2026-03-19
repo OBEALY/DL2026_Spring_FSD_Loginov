@@ -44,6 +44,8 @@ interface ExpeditionPassport {
   hintsUsed: number;
 }
 
+type HomeSidebarTab = "leaderboard" | "suggest";
+
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Произошла неожиданная ошибка.";
 }
@@ -143,6 +145,154 @@ function getRecommendedTheme(
   return averageScore >= 650 ? byId("capitals") : byId("iconic-landmarks");
 }
 
+interface ResultModalProps {
+  isOpen: boolean;
+  session: SessionSummary;
+  feedback: AnswerFeedback;
+  leaderboard: LeaderboardEntry[];
+  currentRank: number | null;
+  totalFinishedSessions: number | null;
+  expeditionPassport: ExpeditionPassport | null;
+  recommendedTheme: ThemeOption | null;
+  onClose: () => void;
+  onReset: () => void;
+  onStartRecommended: (themeId: CollectionId) => void;
+}
+
+function ResultModal({
+  isOpen,
+  session,
+  feedback,
+  leaderboard,
+  currentRank,
+  totalFinishedSessions,
+  expeditionPassport,
+  recommendedTheme,
+  onClose,
+  onReset,
+  onStartRecommended
+}: ResultModalProps): JSX.Element | null {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div className="modal-backdrop" role="presentation">
+      <section
+        className="panel result-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="result-modal-title"
+      >
+        <div className="result-modal__topline">
+          <span className="eyebrow">Отчёт по экспедиции</span>
+          <button type="button" className="ghost-button modal-close" onClick={onClose}>
+            Вернуться к карте
+          </button>
+        </div>
+
+        <div className="result-modal__hero">
+          <div>
+            <h2 id="result-modal-title">Сессия завершена: {feedback.accuracyLabel}</h2>
+            <p>
+              Последний факт раунда: {feedback.funFact}
+            </p>
+          </div>
+
+          <div className="result-modal__summary">
+            <article className="result-stat">
+              <span className="stat-label">Итоговый счёт</span>
+              <strong className="stat-value">
+                {scoreFormatter.format(session.totalScore)}
+              </strong>
+            </article>
+            <article className="result-stat">
+              <span className="stat-label">Место в рейтинге</span>
+              <strong className="stat-value">
+                {currentRank !== null ? `#${currentRank}` : "Обновляем..."}
+              </strong>
+              <span className="result-stat__meta">
+                {currentRank !== null && totalFinishedSessions !== null
+                  ? `из ${scoreFormatter.format(totalFinishedSessions)} завершённых сессий`
+                  : "Позиция появится после обновления лидерборда"}
+              </span>
+            </article>
+            <article className="result-stat">
+              <span className="stat-label">Последний ответ</span>
+              <strong className="stat-value">
+                {feedback.distanceKm.toLocaleString("ru-RU")} км
+              </strong>
+              <span className="result-stat__meta">
+                +{scoreFormatter.format(feedback.scoreAwarded)} очков
+              </span>
+            </article>
+          </div>
+        </div>
+
+        <div className="result-modal__body">
+          <div className="result-modal__column">
+            {expeditionPassport ? (
+              <div className="passport-card">
+                <span className="eyebrow">Киллер-фича</span>
+                <h4>Паспорт экспедиции: {expeditionPassport.title}</h4>
+                <p>{expeditionPassport.summary}</p>
+
+                <div className="passport-grid">
+                  <article className="passport-stat">
+                    <span>Средняя ошибка</span>
+                    <strong>
+                      {expeditionPassport.averageDistanceKm.toLocaleString("ru-RU")} км
+                    </strong>
+                  </article>
+                  <article className="passport-stat">
+                    <span>Лучший клик</span>
+                    <strong>
+                      {expeditionPassport.bestDistanceKm.toLocaleString("ru-RU")} км
+                    </strong>
+                  </article>
+                  <article className="passport-stat">
+                    <span>Почти идеальных</span>
+                    <strong>{expeditionPassport.nearPerfectHits}</strong>
+                  </article>
+                  <article className="passport-stat">
+                    <span>Подсказок открыто</span>
+                    <strong>{expeditionPassport.hintsUsed}</strong>
+                  </article>
+                </div>
+              </div>
+            ) : null}
+
+            {recommendedTheme ? (
+              <div className="recommendation-card">
+                <span className="eyebrow">Следующий шаг</span>
+                <h4>Следующая экспедиция: {recommendedTheme.label}</h4>
+                <p>{recommendedTheme.description}</p>
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => onStartRecommended(recommendedTheme.id)}
+                >
+                  Запустить рекомендованный режим
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="result-modal__column">
+            <LeaderboardPanel items={leaderboard} currentSessionId={session.id} />
+          </div>
+        </div>
+
+        <div className="result-modal__actions">
+          <button type="button" className="ghost-button" onClick={onReset}>
+            Новая игра
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function App(): JSX.Element {
   const [playerName, setPlayerName] = useState("");
   const [session, setSession] = useState<SessionSummary | null>(null);
@@ -171,6 +321,8 @@ export default function App(): JSX.Element {
   const [suggestionErrorMessage, setSuggestionErrorMessage] = useState<string | null>(
     null
   );
+  const [homeSidebarTab, setHomeSidebarTab] = useState<HomeSidebarTab>("leaderboard");
+  const [isResultModalOpen, setIsResultModalOpen] = useState(false);
 
   const isFinished = session?.status === "finished";
   const questionNumber = session
@@ -306,6 +458,7 @@ export default function App(): JSX.Element {
       setHintsUsed(0);
       setCurrentRank(null);
       setTotalFinishedSessions(null);
+      setIsResultModalOpen(false);
     } catch (caughtError) {
       setError(getErrorMessage(caughtError));
     } finally {
@@ -343,6 +496,7 @@ export default function App(): JSX.Element {
 
       if (response.finished) {
         await refreshLeaderboard(response.session.id);
+        setIsResultModalOpen(true);
       }
     } catch (caughtError) {
       setError(getErrorMessage(caughtError));
@@ -379,6 +533,7 @@ export default function App(): JSX.Element {
     setIsImageLoading(false);
     setCurrentRank(null);
     setTotalFinishedSessions(null);
+    setIsResultModalOpen(false);
     setError(null);
   }
 
@@ -532,17 +687,36 @@ export default function App(): JSX.Element {
                   километрах, баллы и затем может сразу пойти в следующую тематическую
                   подборку, которую система подскажет сама.
                 </p>
-
-                <LeaderboardPanel items={leaderboard} />
               </section>
 
-              <QuestionSuggestionForm
-                defaultPlayerName={playerName}
-                isSubmitting={isSubmittingSuggestion}
-                successMessage={suggestionSuccessMessage}
-                errorMessage={suggestionErrorMessage}
-                onSubmit={handleSuggestionSubmit}
-              />
+              <section className="home-tab-switcher">
+                <button
+                  type="button"
+                  className={`home-tab${homeSidebarTab === "leaderboard" ? " is-active" : ""}`}
+                  onClick={() => setHomeSidebarTab("leaderboard")}
+                >
+                  Лидерборд
+                </button>
+                <button
+                  type="button"
+                  className={`home-tab${homeSidebarTab === "suggest" ? " is-active" : ""}`}
+                  onClick={() => setHomeSidebarTab("suggest")}
+                >
+                  Предложить вопрос
+                </button>
+              </section>
+
+              {homeSidebarTab === "leaderboard" ? (
+                <LeaderboardPanel items={leaderboard} />
+              ) : (
+                <QuestionSuggestionForm
+                  defaultPlayerName={playerName}
+                  isSubmitting={isSubmittingSuggestion}
+                  successMessage={suggestionSuccessMessage}
+                  errorMessage={suggestionErrorMessage}
+                  onSubmit={handleSuggestionSubmit}
+                />
+              )}
             </section>
           </section>
         ) : (
@@ -642,94 +816,40 @@ export default function App(): JSX.Element {
                     </div>
 
                     {isFinished ? (
-                      <div className="finished-block">
-                        <div className="result-summary">
-                          <article className="result-stat">
-                            <span className="stat-label">Ваш счёт</span>
-                            <strong className="stat-value">
-                              {scoreFormatter.format(session.totalScore)}
-                            </strong>
-                          </article>
-                          <article className="result-stat">
-                            <span className="stat-label">Ваш рейтинг</span>
-                            <strong className="stat-value">
-                              {currentRank !== null ? `#${currentRank}` : "Обновляем..."}
-                            </strong>
-                            <span className="result-stat__meta">
-                              {currentRank !== null && totalFinishedSessions !== null
-                                ? `из ${scoreFormatter.format(totalFinishedSessions)} завершённых сессий`
-                                : "Позиция появится после обновления лидерборда"}
-                            </span>
-                          </article>
-                        </div>
-
-                        <p className="finished-copy">
-                          Игра завершена. Финальный результат уже сохранён в таблице
-                          лидеров, так что можно сравнить себя с другими игроками.
+                      <div className="finished-inline-card">
+                        <span className="eyebrow">Сессия завершена</span>
+                        <h4>Итоговый отчёт уже готов</h4>
+                        <p>
+                          Открой модальное окно с рейтингом, паспортом экспедиции и
+                          рекомендацией следующего режима.
                         </p>
-
-                        {expeditionPassport ? (
-                          <div className="passport-card">
-                            <span className="eyebrow">Киллер-фича</span>
-                            <h4>Паспорт экспедиции: {expeditionPassport.title}</h4>
-                            <p>{expeditionPassport.summary}</p>
-
-                            <div className="passport-grid">
-                              <article className="passport-stat">
-                                <span>Средняя ошибка</span>
-                                <strong>
-                                  {expeditionPassport.averageDistanceKm.toLocaleString("ru-RU")} км
-                                </strong>
-                              </article>
-                              <article className="passport-stat">
-                                <span>Лучший клик</span>
-                                <strong>
-                                  {expeditionPassport.bestDistanceKm.toLocaleString("ru-RU")} км
-                                </strong>
-                              </article>
-                              <article className="passport-stat">
-                                <span>Почти идеальных</span>
-                                <strong>{expeditionPassport.nearPerfectHits}</strong>
-                              </article>
-                              <article className="passport-stat">
-                                <span>Подсказок открыто</span>
-                                <strong>{expeditionPassport.hintsUsed}</strong>
-                              </article>
-                            </div>
-                          </div>
-                        ) : null}
-
-                        {recommendedTheme ? (
-                          <div className="recommendation-card">
-                            <span className="eyebrow">Следующий шаг</span>
-                            <h4>Следующая экспедиция: {recommendedTheme.label}</h4>
-                            <p>{recommendedTheme.description}</p>
-                            <button
-                              type="button"
-                              className="primary-button"
-                              onClick={() => void startGame(recommendedTheme.id)}
-                            >
-                              Запустить рекомендованный режим
-                            </button>
-                          </div>
-                        ) : null}
-
-                        <button
-                          type="button"
-                          className="ghost-button"
-                          onClick={handleResetGame}
-                        >
-                          Вернуться на старт
-                        </button>
+                        <div className="feedback-actions">
+                          <button
+                            type="button"
+                            className="primary-button"
+                            onClick={() => setIsResultModalOpen(true)}
+                          >
+                            Открыть отчёт
+                          </button>
+                          <button
+                            type="button"
+                            className="ghost-button"
+                            onClick={handleResetGame}
+                          >
+                            Новая игра
+                          </button>
+                        </div>
                       </div>
                     ) : (
-                      <button
-                        type="button"
-                        className="primary-button"
-                        onClick={handleNextQuestion}
-                      >
-                        Следующий вопрос
-                      </button>
+                      <div className="feedback-actions">
+                        <button
+                          type="button"
+                          className="primary-button"
+                          onClick={handleNextQuestion}
+                        >
+                          Следующий вопрос
+                        </button>
+                      </div>
                     )}
                   </>
                 ) : (
@@ -743,11 +863,6 @@ export default function App(): JSX.Element {
                   </>
                 )}
               </section>
-
-              <LeaderboardPanel
-                items={leaderboard}
-                currentSessionId={isFinished ? session.id : null}
-              />
             </aside>
 
             <section className="map-section">
@@ -781,6 +896,25 @@ export default function App(): JSX.Element {
           </section>
         )}
       </main>
+
+      {session && feedback && isFinished ? (
+        <ResultModal
+          isOpen={isResultModalOpen}
+          session={session}
+          feedback={feedback}
+          leaderboard={leaderboard}
+          currentRank={currentRank}
+          totalFinishedSessions={totalFinishedSessions}
+          expeditionPassport={expeditionPassport}
+          recommendedTheme={recommendedTheme}
+          onClose={() => setIsResultModalOpen(false)}
+          onReset={handleResetGame}
+          onStartRecommended={(themeId) => {
+            setIsResultModalOpen(false);
+            void startGame(themeId);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
