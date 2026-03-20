@@ -86,6 +86,19 @@ export interface QuestionSuggestionPayload {
   sourceUrl: string | null;
 }
 
+export interface QuestionSuggestionRecord {
+  id: string;
+  playerName: string;
+  prompt: string;
+  locationName: string;
+  themeId: QuestionTheme;
+  notes: string | null;
+  sourceUrl: string | null;
+  status: "new";
+  createdAt: string;
+}
+
 export interface QuestionSuggestionResponse {
+  suggestion: QuestionSuggestionRecord;
   message: string;
 }

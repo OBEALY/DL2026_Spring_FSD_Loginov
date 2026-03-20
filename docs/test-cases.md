@@ -83,7 +83,7 @@
 
 ## 4. Результаты автоматического прогона
 
-Последняя локальная проверка перед обновлением документации:
+Последний локальный прогон автора перед обновлением документации:
 
 - `backend build` - `Passed`
 - `backend tests` - `8 passed`
@@ -92,8 +92,8 @@
 Команды, которыми это проверялось:
 
 ```bash
-docker run --rm -v "${PWD}:/src" -w /tmp node:20-alpine sh -lc "cp -r /src/backend ./backend && cd backend && npm install && npm run build && npm test"
-docker run --rm -v "${PWD}:/src" -w /tmp node:20-alpine sh -lc "cp -r /src/frontend ./frontend && cd frontend && npm install && npm run build"
+docker run --rm -v "${PWD}:/src" -w /tmp node:20-alpine sh -lc "cp -r /src/backend ./backend && cd backend && npm ci && npm run build && npm test"
+docker run --rm -v "${PWD}:/src" -w /tmp node:20-alpine sh -lc "cp -r /src/frontend ./frontend && cd frontend && npm ci && npm run build"
 ```
 
 ## 5. Ручные smoke-тесты
@@ -141,8 +141,6 @@ docker run --rm -v "${PWD}:/src" -w /tmp node:20-alpine sh -lc "cp -r /src/front
   - [home.png](./images/home.png)
   - [game.png](./images/game.png)
   - [result.png](./images/result.png)
-- Внешний HTML для письма и вложения:
-  - `E:\Geo-quiz_test_cases_and_email.html`
 
 ## 7. Итог
 

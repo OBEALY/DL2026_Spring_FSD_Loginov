@@ -83,7 +83,7 @@ docker compose down
 ```bash
 cd backend
 cp .env.example .env
-npm install
+npm ci
 npm run dev
 ```
 
@@ -92,7 +92,7 @@ npm run dev
 ```powershell
 cd backend
 Copy-Item .env.example .env
-npm install
+npm ci
 npm run dev
 ```
 
@@ -109,7 +109,7 @@ USE_IN_MEMORY_DATA=true
 ```bash
 cd frontend
 cp .env.example .env
-npm install
+npm ci
 npm run dev
 ```
 
@@ -118,7 +118,7 @@ npm run dev
 ```powershell
 cd frontend
 Copy-Item .env.example .env
-npm install
+npm ci
 npm run dev
 ```
 
@@ -182,7 +182,7 @@ USE_IN_MEMORY_DATA=false
 
 ```bash
 cd backend
-npm install
+npm ci
 npm test
 ```
 

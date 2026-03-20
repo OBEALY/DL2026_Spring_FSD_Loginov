@@ -234,6 +234,17 @@
 
 ```json
 {
+  "suggestion": {
+    "id": "suggestion-id",
+    "playerName": "Alex",
+    "prompt": "Где находится Колизей?",
+    "locationName": "Колизей",
+    "themeId": "iconic-landmarks",
+    "notes": "Хорошо дополняет европейскую подборку",
+    "sourceUrl": "https://ru.wikipedia.org/wiki/Колизей",
+    "status": "new",
+    "createdAt": "2026-03-19T12:35:00.000Z"
+  },
   "message": "Спасибо! Мы сохранили предложение и сможем добавить его после проверки."
 }
 ```
